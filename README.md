@@ -37,7 +37,6 @@ Then configure:
 
 - `glass` is the default opencode theme with transparent backgrounds.
 - `autoupdate: false` prevents the official release from overwriting the patched binary.
-- Your terminal must also support and have transparency enabled.
 
 ### Update
 
