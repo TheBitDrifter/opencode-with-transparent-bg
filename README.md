@@ -19,15 +19,23 @@ gh release download latest \
 chmod +x ~/.opencode/bin/opencode
 ```
 
-Then set your config (`~/.config/opencode/opencode.json`):
+Then configure:
+
+`~/.config/opencode/tui.json` (theme goes here, not opencode.json):
 ```json
 {
-  "theme": "glass",
+  "theme": "glass"
+}
+```
+
+`~/.config/opencode/opencode.json` (disable auto-update):
+```json
+{
   "autoupdate": false
 }
 ```
 
-- `glass` is the default opencode theme with transparent backgrounds baked in.
+- `glass` is the default opencode theme with transparent backgrounds.
 - `autoupdate: false` prevents the official release from overwriting the patched binary.
 - Your terminal must also support and have transparency enabled.
 
