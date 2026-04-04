@@ -22,9 +22,18 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/anomalyco/opencode.git
           git fetch upstream dev
-          git merge upstream/dev --no-edit || {
-            echo "::error::Merge conflict — patch needs manual rebase"
-            exit 1
+          # Keep our README on conflict, take upstream for everything else
+          git merge upstream/dev --no-edit -X theirs || {
+            # If conflict is only README, resolve with ours
+            CONFLICTED=$(git diff --name-only --diff-filter=U)
+            if echo "$CONFLICTED" | grep -qx "README.md" && [ "$(echo "$CONFLICTED" | wc -l)" -eq 1 ]; then
+              git checkout --ours README.md
+              git add README.md
+              git commit --no-edit
+            else
+              echo "::error::Merge conflict — patch needs manual rebase"
+              exit 1
+            fi
           }
           git push origin dev
 

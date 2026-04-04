@@ -1,3 +1,53 @@
+## What is this fork?
+
+This fork is just opencode with the transparent background patch from [PR #8403](https://github.com/anomalyco/opencode/pull/8403) / [Issue #8399](https://github.com/anomalyco/opencode/issues/8399). Solely because I like to use opencode with my personal TUI/multiplexer ([shrine](https://github.com/TheBitDrifter/shrine)) which has silly/fun backgrounds:
+
+![opencode with transparent background in shrine](assets/screenshot.png)
+
+### Install
+
+```bash
+# Install opencode (if you haven't already)
+curl -fsSL https://opencode.ai/install | bash
+
+# Replace with the transparent fork
+gh release download latest \
+  --repo TheBitDrifter/opencode-with-transparent-bg \
+  --pattern "opencode" \
+  --output ~/.opencode/bin/opencode \
+  --clobber
+chmod +x ~/.opencode/bin/opencode
+```
+
+Then set your config (`~/.config/opencode/opencode.json`):
+```json
+{
+  "theme": "glass",
+  "autoupdate": false
+}
+```
+
+- `glass` is the default opencode theme with transparent backgrounds baked in.
+- `autoupdate: false` prevents the official release from overwriting the patched binary.
+- Your terminal must also support and have transparency enabled.
+
+### Update
+
+This fork syncs with upstream daily. To grab the latest build, just re-run the download:
+
+```bash
+gh release download latest \
+  --repo TheBitDrifter/opencode-with-transparent-bg \
+  --pattern "opencode" \
+  --output ~/.opencode/bin/opencode \
+  --clobber
+chmod +x ~/.opencode/bin/opencode
+```
+
+> For the real OpenCode README, see [upstream](https://github.com/anomalyco/opencode).
+
+---
+
 <p align="center">
   <a href="https://opencode.ai">
     <picture>
