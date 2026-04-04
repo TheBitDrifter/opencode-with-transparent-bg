@@ -1,0 +1,64 @@
+name: Sync upstream & build
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # daily at 6am UTC
+  workflow_dispatch: # manual trigger
+
+jobs:
+  sync-and-build:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Sync upstream dev
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/anomalyco/opencode.git
+          git fetch upstream dev
+          git merge upstream/dev --no-edit || {
+            echo "::error::Merge conflict — patch needs manual rebase"
+            exit 1
+          }
+          git push origin dev
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install & build
+        run: |
+          bun install
+          ./packages/opencode/script/build.ts --single
+
+      - name: Get upstream version
+        id: version
+        run: |
+          VERSION=$(./packages/opencode/dist/opencode-darwin-arm64/bin/opencode --version)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create/update release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="latest"
+          NOTES="Built from upstream + transparency patch on $(date -u +%Y-%m-%d)
+          Version: ${{ steps.version.outputs.version }}"
+
+          # Delete existing release if present
+          gh release delete "$TAG" --yes 2>/dev/null || true
+          git tag -d "$TAG" 2>/dev/null || true
+          git push origin ":refs/tags/$TAG" 2>/dev/null || true
+
+          # Create new release
+          gh release create "$TAG" \
+            --title "opencode (transparent)" \
+            --notes "$NOTES" \
+            --latest \
+            ./packages/opencode/dist/opencode-darwin-arm64/bin/opencode
