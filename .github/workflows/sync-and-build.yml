@@ -17,11 +17,21 @@ jobs:
           fetch-depth: 0
 
       - name: Sync upstream dev
+        id: sync
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/anomalyco/opencode.git
           git fetch upstream dev
+
+          if [ "$(git rev-parse HEAD)" = "$(git merge-base HEAD upstream/dev)" ] || git merge-base --is-ancestor upstream/dev HEAD; then
+            echo "No upstream changes, skipping build."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
           # Keep our README on conflict, take upstream for everything else
           git merge upstream/dev --no-edit -X theirs || {
             # If conflict is only README, resolve with ours
@@ -38,21 +48,25 @@ jobs:
           git push origin dev
 
       - uses: oven-sh/setup-bun@v2
+        if: steps.sync.outputs.changed == 'true'
         with:
           bun-version-file: package.json
 
       - name: Install & build
+        if: steps.sync.outputs.changed == 'true'
         run: |
           bun install
           ./packages/opencode/script/build.ts --single
 
       - name: Get upstream version
+        if: steps.sync.outputs.changed == 'true'
         id: version
         run: |
           VERSION=$(./packages/opencode/dist/opencode-darwin-arm64/bin/opencode --version)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create/update release
+        if: steps.sync.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
